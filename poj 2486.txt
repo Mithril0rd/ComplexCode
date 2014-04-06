@@ -1,0 +1,65 @@
+#include <cstdio>
+#include <cstring>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+const int MAX_N = 101;
+
+int n, k;
+int val[MAX_N];
+int dp[2][MAX_N][201];
+
+vector<int> edge[MAX_N];
+
+void addedge(int u, int v) {
+	edge[u].push_back(v);
+}
+
+void init() {
+	memset(dp, 0, sizeof dp);
+	for (int i = 0; i < MAX_N; ++i) {
+		edge[i].clear();
+	} 
+}
+
+void dfs(int u, int fa) {
+	for (int i = 0; i <= k; ++i) {
+		dp[0][u][i] = dp[1][u][i] = val[u];
+	}
+	for (int i = 0; i < edge[u].size(); ++i) {
+		int v = edge[u][i];
+		if (v == fa) continue;
+		dfs(v, u);
+		for (int j = k; j >= 0; --j) {
+			for (int l = 0; l <= j; ++l) {
+				dp[0][u][j + 2] = max(dp[0][u][j + 2], dp[0][v][l] + dp[0][u][j - l]);
+				dp[1][u][j + 2] = max(dp[1][u][j + 2], dp[0][v][l] + dp[1][u][j - l]);
+				dp[1][u][j + 1] = max(dp[1][u][j + 1], dp[0][u][j - l] + dp[1][v][l]);
+			}
+		}
+	}
+}
+
+void solve() {
+	dfs(1, -1);
+	printf("%d\n", dp[1][1][k]);
+}
+
+int main() {
+	while (2 == scanf("%d%d", &n, &k)) {
+		init();
+		for (int i = 1; i <= n; ++i) {
+			scanf("%d", &val[i]);
+		}
+		for (int i = 1; i < n; ++i) {
+			int u, v;
+			scanf("%d%d", &u, &v);
+			addedge(u, v);
+			addedge(v, u);
+		}
+		solve();
+	}
+	return 0;
+}

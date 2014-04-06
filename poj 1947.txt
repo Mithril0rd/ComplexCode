@@ -1,0 +1,98 @@
+#include <stdio.h>
+#include <string.h>
+#define MAX 500
+#define INF 1000000000
+#define min(a,b) (a)<(b)?(a):(b)
+
+
+struct node {
+
+	int v;
+	node *next;
+}*head[MAX],tree[MAX];
+int n,ans,dp[MAX][MAX];
+int m,ptr,sum[MAX],vis[MAX];
+
+
+void AddEdge(int a,int b) {
+
+	tree[ptr].v = b;
+	tree[ptr].next = head[a];
+	head[a] = &tree[ptr++];
+
+
+	tree[ptr].v = a;
+	tree[ptr].next = head[b];
+	head[b] = &tree[ptr++];
+}
+void Solve_1A(int in) {
+
+	if (vis[in]) return;
+	int i,j,k,son,pa,tot;
+	
+	
+	tot = 0;
+	vis[in] = sum[in] = 1;
+	node *p = head[in];
+
+	
+	while (p != NULL) {
+	//获取他的子树数量tot，和子节点数量sum[in]
+		if (!vis[p->v]) {
+		//先出现过的为父节点
+			Solve_1A(p->v);
+			sum[in] += sum[p->v];
+			tot++;
+		}
+		p = p->next;
+	}
+
+
+	p = head[in];
+	//if (in != 1) tot++;  //除了根节点，其他点的都有父节点，要把与父节点相连的边也删去
+	dp[in][1] = tot;
+	while (p != NULL) {
+
+		int v = p->v; //子节点编号
+		for (j = sum[in] + 1; j >= 2; --j)
+			for (k = 1; k < j; ++k)
+				if (dp[in][k] != INF && dp[v][j-k] != INF)
+					dp[in][j] = min(dp[in][j],dp[in][k]-1+dp[v][j-k]);
+		p = p->next;
+	}
+}
+
+
+int main()
+{
+	int i,j,k,t;
+
+
+	while (scanf("%d%d",&n,&m) != EOF) {
+
+		ptr = 1,ans = INF;
+		memset(vis,0,sizeof(vis));
+		memset(head,NULL,sizeof(head));
+		for (i = 0; i <= n; ++i)
+			for (j = 0; j <= n; ++j)
+				dp[i][j] = INF;
+
+
+		for (i = 1; i < n; ++i) {
+
+			int a,b;
+			scanf("%d%d",&a,&b);
+			AddEdge(a,b);
+		}
+
+
+		Solve_1A(1);
+		for (i = 1; i <= n; ++i) {
+
+			if (i == 1)
+				ans = min(ans,dp[i][m]);
+			else ans = min(ans,dp[i][m]+1);//非根节点要删除连到父亲节点的那条边
+		}
+		printf("%d\n",ans);
+	}
+}
