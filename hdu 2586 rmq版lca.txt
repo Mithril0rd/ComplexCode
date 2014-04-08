@@ -1,0 +1,107 @@
+#include <cstdio>
+#include <cstring>
+#include <vector>
+#include <cmath>
+
+using namespace std;
+
+const int MAX_LOG = 25;
+const int MAX_N = 40011;
+#pragma comment(linker, "/STACK:102400000,102400000")
+int n;
+int id[MAX_N], dis[MAX_N];
+int vs[MAX_N << 1];
+int depth[MAX_N << 1];
+struct node {
+	int v, w;
+};
+vector<node> G[MAX_N];
+
+void addedge(int u, int v, int w) {
+	node t;
+	t.v = v, t.w = w;
+	G[u].push_back(t);
+	t.v = u;
+	G[v].push_back(t);
+}
+
+bool vis[MAX_N];
+
+void dfs(int u, int fa, int dep, int &k) {
+	id[u] = k;
+	vs[k] = u;
+	depth[k++] = dep;
+	vis[u] = true;
+	for (int i = 0; i < G[u].size(); ++i) {
+ 		if (G[u][i].v != fa) {
+			dis[G[u][i].v] = dis[u] + G[u][i].w;
+			dfs(G[u][i].v, u, dep + 1, k);
+			vs[k] = u;
+			depth[k++] = dep;
+		} 
+	}
+}
+
+int dp[MAX_N << 1][MAX_LOG];
+
+void Clear() {
+	memset(vis, false, sizeof vis);
+	memset(dp, 0, sizeof dp);
+	memset(id, 0, sizeof id);
+	memset(dis, 0, sizeof dis);
+	memset(vs, 0, sizeof vs);
+	memset(depth, 0, sizeof depth);
+}
+
+void rmq_init(int nn) { 
+	for (int i = 0; i < nn; ++i) {
+		dp[i][0] = i;
+	} 
+	for (int j = 1; (1 << j) < nn; ++j) {
+		for (int i = 0; i + (1 << j) - 1 < nn; ++i) {
+			dp[i][j] = depth[dp[i][j - 1]] < depth[dp[i + (1 << (j - 1))][j - 1]] ?
+					   depth[dp[i][j - 1]] : depth[dp[i + (1 << (j - 1))][j - 1]];
+		}
+	}
+}   
+
+int query(int l, int r) {
+	int k = 0;
+	while (1 << (k + 1) <= r - l + 1) ++k;
+	return depth[dp[l][k]] < depth[dp[r - (1 << k) + 1][k]] ?
+		   depth[dp[l][k]] : depth[dp[r - (1 << k) + 1][k]];
+}
+
+int lca(int u, int v) {
+	return vs[query(min(id[u], id[v]), max(id[u], id[v]) + 1)];
+}
+
+int main() {
+	int T, m;
+	scanf("%d", &T);
+	while (T-- > 0) {
+		scanf("%d%d", &n, &m);
+		for (int i = 0; i < MAX_N; ++i) G[i].clear();
+		for (int i = 1; i < n; ++i) {
+			int u, v, w;
+			scanf("%d%d%d", &u, &v, &w);
+			addedge(u, v, w);
+		} 
+		int k = 0;
+		Clear();
+		dis[1] = 0;
+		dfs(1, -1, 0, k);
+		rmq_init(n * 2 - 1);
+		for (int i = 0; i < m; ++i) {
+			int u, v;
+			scanf("%d %d", &u, &v);
+			if (u == v) {
+				puts("0");
+				continue;
+			} 
+			int ans = dis[u] + dis[v] - 2 * dis[lca(u, v)];
+			printf("%d\n", ans); 
+		}
+	}
+	return 0;
+}

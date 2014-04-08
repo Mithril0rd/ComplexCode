@@ -1,0 +1,119 @@
+#include <cstdio>
+#include <cstring>
+
+const int MAX_V = 100001;
+const int MAX_E = 100001;
+
+int head[MAX_V];
+struct node {
+	int v, next;
+	node():v(0),next(0){}
+	node(const int &v, const int &w):v(v), next(w) {}
+} edge[MAX_E << 1];
+
+int edgecnt, askcnt;
+
+void addedge(int u, int v) {
+	edge[edgecnt] = node(v, head[u]);
+	head[u] = edgecnt++;
+}
+
+int n, m;
+int fa[MAX_V];
+bool vis[MAX_V];
+int dp[MAX_V];
+
+int head2[MAX_V];
+struct ask {
+	int u, v, lca, next;
+	ask():u(0),v(0),lca(0),next(0){
+	}
+	ask(const int &u, const int &v, const int &lca, const int &next):
+		u(u),v(v),lca(lca),next(next) {}
+} A[MAX_E << 1];
+
+void addask(int u, int v) {
+	A[askcnt] = ask(u, v, -1, head2[u]);
+	head2[u] = askcnt++;
+}
+
+void Clear() {
+	memset(edge, 0, sizeof edge);
+	memset(fa, 0, sizeof fa);
+	memset(vis, 0, sizeof vis);
+	memset(head, -1, sizeof head);
+	memset(head2, -1, sizeof head2);
+	memset(dp, 0, sizeof dp);
+	for (int i = 0; i <= n; ++i) {
+		fa[i] = i;
+	}
+	askcnt = edgecnt = 0;
+}
+
+int Find(int x) {
+	return x == fa[x] ? x : fa[x] = Find(fa[x]);
+}
+
+void tarjan(int u, int fat) {
+	vis[u] = true;
+	for (int i = head[u]; ~i; i = edge[i].next) {
+		int v = edge[i].v;
+		if (!vis[v]) {
+			tarjan(v, u);
+			fa[v] = u;
+		}
+	} 
+	for (int i = head2[u]; ~i; i = A[i].next) {
+		int v = A[i].v;
+		if (vis[v]) {
+			A[i].lca = A[i ^ 1].lca = Find(v);
+		}
+	}
+}
+
+void dfs(int u, int fa) {
+	vis[u] = true;
+	for (int i = head[u]; ~i; i = edge[i].next) {
+		if (vis[edge[i].v]) continue;
+		dfs(edge[i].v, u);
+		dp[u] += dp[edge[i].v];
+	}
+}
+
+void solve() {
+	tarjan(1, -1);
+	for (int i = 0; i < m; ++i) {
+		int k = 2 * i, c = A[k].lca;
+		if (~c) dp[c] -= 2;
+	}
+	memset(vis, false, sizeof vis);
+	dfs(1, -1);
+	int ans = 0;
+	for (int i = 2; i <= n; ++i) {
+		if (dp[i] == 0) ans += m;
+		else if (dp[i] == 1) ++ans;
+	}
+	printf("%d\n", ans);
+}
+
+int main() {
+	while(2 == scanf("%d%d", &n, &m)) {
+		Clear();
+		for (int i = 1; i < n; ++i) {
+			int u, v;
+			scanf("%d%d", &u, &v);
+			addedge(u, v);
+			addedge(v, u);
+		}
+		for (int i = 0; i < m; ++i) {
+			int u, v;
+			scanf("%d%d", &u, &v);
+			addask(u, v);
+			addask(v, u);
+			++dp[v], ++dp[u];
+			
+		}
+		solve();
+	}
+	return 0;
+}
