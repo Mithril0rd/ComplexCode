@@ -1,0 +1,62 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+
+using namespace std; 
+
+const int MAX_N = 207;
+const int MAX_L = MAX_N * MAX_N;
+const int INF = MAX_L * MAX_L;
+
+int n, a, b;
+int h[MAX_N];
+bool can[2][MAX_L];
+int dp[MAX_N][MAX_L][2];
+
+int main() {
+	freopen("input.txt", "r", stdin);
+	freopen("output.txt", "w", stdout);
+	scanf("%d", &n);
+	scanf("%d%d", &a, &b);
+	int sum = 0;
+	for (int i = 1; i <= n; ++i) {
+		scanf("%d", &h[i]);
+		sum += h[i];
+	}
+	if (sum > a + b) puts("-1");
+	else {
+		for (int i = 0; i <= n; ++i) {
+			for (int j = 0; j <= sum; ++j) {
+				dp[i][j][0] = dp[i][j][1] = INF;
+			}
+		}
+		
+		dp[0][0][1] = dp[0][0][0] = 0; 
+		int sum1 = 0;
+		
+		for (int i = 1; i <= n; ++i) {
+			sum1 += h[i];
+			for (int j = sum1; j >= 0; --j) {
+				if (i == 1) 
+					dp[i][j][1] = min(dp[i - 1][j][1], dp[i - 1][j][0]);
+				else 
+					dp[i][j][1] = min(dp[i - 1][j][1], dp[i - 1][j][0] + min(h[i], h[i - 1]));
+				
+				if (j >= h[i]) {
+					if (i == 1)
+						dp[i][j][0] = min(dp[i - 1][j - h[i]][0], dp[i - 1][j - h[i]][1]);
+					else 
+						dp[i][j][0] = min(dp[i - 1][j - h[i]][0], dp[i - 1][j - h[i]][1] + min(h[i], h[i - 1]));
+				} 
+			}
+		}
+		int ans = INF;
+		for (int i = max(0, sum - a); i <= b; ++i) {
+			ans = min(ans, min(dp[n][i][0], dp[n][i][1]));
+		} 
+		if (ans == INF) puts("-1");
+		else printf("%d\n", ans);
+			
+	}
+	return 0;
+} 

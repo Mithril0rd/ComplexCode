@@ -1,0 +1,62 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+
+using namespace std; 
+
+const int MAX_N = 1000007;
+
+#define lson idx << 1
+#define rson (lson) + 1
+
+struct node {
+	int l, r, idx, val;
+} seg[MAX_N << 2];
+int nL[MAX_N], nR[MAX_N];
+char str[MAX_N];
+
+void build(int l, int r, int idx) {
+	seg[idx] = node{l, r, idx, 0};
+	if (l == r) {
+		seg[idx].val = nL[l];
+		return ;
+	}
+	int mid = (l + r) >> 1;
+	build(l, mid, lson), build(mid + 1, r, rson);
+	seg[idx].val = min(seg[lson].val, seg[rson].val);
+}
+
+int query(int l, int r, int idx) {
+	if (l == seg[idx].l && seg[idx].r == r) {
+		return seg[idx].val;
+	}
+	int mid = (seg[idx].l + seg[idx].r) >> 1;
+	if (r <= mid) return query(l, r, lson);
+	else if (l > mid) return query(l, r, rson);
+	else return min(query(l, mid, lson), query(mid + 1, r, rson));
+}
+
+int main() {
+	scanf("%s", str);
+	int l = strlen(str);
+	int noMatch = 0;
+	for (int i = 1; i <= l; ++i) {
+		nR[i] = nR[i - 1];
+		if (str[i - 1] == '(') ++noMatch;
+		else if (noMatch > 0) {
+			++nR[i], --noMatch;
+		} 
+		nL[i] = noMatch;
+	}
+	build(1, l, 1);
+	int m;
+	scanf("%d", &m);
+	for (int i = 0; i < m; ++i) {
+		int l, r;
+		scanf("%d%d", &l, &r);
+		int ans = nR[r] - nR[l - 1] -  max(0, nL[l - 1] - query(l, r, 1));
+		ans <<= 1;
+		printf("%d\n", ans);
+	}
+	return 0;
+}

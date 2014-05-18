@@ -1,0 +1,67 @@
+#include <cstdio>
+#include <cstring>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+const int MAX_N = 100007;
+const int MAX_D = 18;
+
+int n;
+struct node {
+	int u, v, next;
+} G[MAX_N << 1];
+int head[MAX_N], edgecnt, T;
+int fa[MAX_D][MAX_N << 1], dep[MAX_N];
+vector<int> pos[MAX_N << 1], ans;
+int in[MAX_N], out[MAX_N];
+
+void addedge(int u, int v) {
+	G[edgecnt] = node{u, v, head[u]};
+	head[u] = edgecnt++;
+}
+
+void dfs(int u, int d, int fa) {
+	dep[u] = d;
+	pos[d].push_back(T);
+	in[u] = T++;
+	for (int i = head[u]; ~i; i = G[i].next) {
+		dfs(G[i].v, d + 1, u);
+	}
+	out[u] = T;
+}
+
+int main() {
+	scanf("%d", &n);
+	memset(head, -1, sizeof head);
+	for (int i = 1; i <= n; ++i) {
+		scanf("%d", &fa[0][i]);
+		addedge(fa[0][i], i);
+	} 
+	dfs(0, 0, -1);
+	for (int i = 0; i + 1 < MAX_D; ++i) {
+		for (int u = 0; u < MAX_N; ++u) {
+			if (fa[i][u] == 0) fa[i + 1][u] = 0;
+			else fa[i + 1][u] = fa[i][fa[i][u]]; 
+		}
+	}
+	int m;
+	scanf("%d", &m);
+	for (int i = 0; i < m; ++i) {
+		int v, p;
+		scanf("%d%d", &v, &p);
+		int vv = v;
+		for (int i = MAX_D - 1; i >= 0; --i) {
+			if (p >> i & 1) vv = fa[i][vv];
+		}
+		if (vv > 0) ans.push_back((lower_bound(pos[dep[v]].begin(), pos[dep[v]].end(), out[vv]) -
+		lower_bound(pos[dep[v]].begin(), pos[dep[v]].end(), in[vv])) - 1);
+		else ans.push_back(0);
+	}
+	for (int i = 0; i < ans.size(); ++i) {
+		if (i == 0) printf("%d", ans[i]);
+		else printf(" %d", ans[i]);
+	}
+	return 0;
+}
