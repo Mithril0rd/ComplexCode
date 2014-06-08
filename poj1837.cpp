@@ -10,7 +10,6 @@ int dp[MAX_N][MAX_S<<1];
 int a[MAX_N], b[MAX_N];
 
 int main() {
-	puts("Mithril0rd");
 	scanf("%d%d", &n, &m);
 	for (int i = 1; i <= n; ++i) {
 		scanf("%d", a + i);
@@ -52,3 +51,4 @@ int main() {
 	printf("%d\n", ans);
 	return 0;
 }
+
