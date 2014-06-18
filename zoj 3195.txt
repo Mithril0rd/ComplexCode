@@ -1,0 +1,122 @@
+#include <cstdio>
+#include <cstring>
+#include <vector>
+#include <cmath>
+
+using namespace std;
+
+const int MAX_LOG = 20;
+const int MAX_N = 50001;
+const int MAX_M = 210000;
+#pragma comment(linker, "/STACK:102400000,102400000")
+
+int n;
+int fat[MAX_N];
+int vis[MAX_N];
+int depth[MAX_N], dis[MAX_N];
+struct node {
+	int v, w;
+};
+vector<node> G[MAX_N];
+
+int head[MAX_N];
+struct ask {
+	int u, v, lca, next;
+} A[MAX_M << 1];
+int askcnt;
+
+void addedge(int u, int v, int w) {
+	node t;
+	t.v = v, t.w = w;
+	G[u].push_back(t);
+	t.v = u;
+	G[v].push_back(t);
+}
+
+void addask(int u, int v) {
+	A[askcnt].u = u;
+	A[askcnt].v = v;
+	A[askcnt].lca = -1;
+	A[askcnt].next = head[u];
+	head[u] = askcnt++;
+}
+
+int Find(int x) {
+	return x == fat[x] ? x : fat[x] = Find(fat[x]);
+}
+
+void Clear() {
+	memset(A, 0, sizeof A);
+	memset(head, -1, sizeof head);
+	memset(depth, 0, sizeof depth);
+	memset(vis, false, sizeof vis);
+	for (int i = 0; i <= n; ++i) {
+		fat[i] = i;
+	}
+	askcnt = 0;
+}
+
+void tarjan(int u, int fa) {
+	vis[u] = fa;
+	for (int i = 0; i < G[u].size(); ++i) {
+		if (!vis[G[u][i].v]) {
+			dis[G[u][i].v] = dis[u] + G[u][i].w;
+			tarjan(G[u][i].v, fa);
+			int v = G[u][i].v;
+			fat[v] = u;
+		}
+	}
+	for (int i = head[u]; ~i; i = A[i].next) {
+		if (vis[A[i].v] == fa) {
+			int v = A[i].v;
+			A[i].lca = A[i ^ 1].lca = Find(v);
+		}
+	}
+}
+
+int main() {
+	int T, m, q;
+	int cas = 0;
+	while (1 == scanf("%d", &n)) {
+		if (cas++) puts("");
+	 	for (int i = 0; i < MAX_N; ++i) G[i].clear();
+		for (int i = 1; i < n; ++i) {
+			int u, v, w;
+			scanf("%d%d%d", &u, &v, &w);
+			addedge(u, v, w);
+		} 
+		Clear(); 
+		scanf("%d", &q);
+		for (int i = 0; i < q; ++i) {
+			int u, v, x;
+			scanf("%d %d %d", &u, &v, &x);
+			addask(u, v); 
+			addask(v, u);
+			addask(u, x);
+			addask(x, u);
+			addask(v, x);
+			addask(x, v);
+		}
+		int fa = 0;
+		for (int i = 1; i <= n; ++i) {
+			if (!vis[i]) {
+				dis[i] = 0;
+				tarjan(i, ++fa);
+			}
+		}
+	
+		for (int i = 0; i < q; ++i) {
+			int k = 6 * i; 
+			int u1 = A[k].u, v1 = A[k].v, lca1 = A[k].lca;
+			int u2 = A[k + 2].u, v2 = A[k + 2].v, lca2 = A[k + 2].lca;
+			int u3 = A[k + 4].u, v3 = A[k + 4].v, lca3 = A[k + 4].lca;
+			 
+			int ans1 = dis[u1] + dis[v1] - 2 * dis[lca1];
+			int ans2 = dis[u2] + dis[v2] - 2 * dis[lca2];
+			int ans3 = dis[u3] + dis[v3] - 2 * dis[lca3];
+			int ans = (ans1 + ans2 + ans3) / 2;
+			printf("%d\n", ans);
+		}
+	}
+	return 0;
+}

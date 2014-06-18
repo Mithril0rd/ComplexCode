@@ -1,0 +1,133 @@
+#include <cstdio>
+#include <cstring>
+#include <vector>
+#include <cmath>
+
+using namespace std;
+
+const int MAX_LOG = 20;
+const int MAX_N = 100001;
+#pragma comment(linker, "/STACK:102400000,102400000")
+
+int n;
+int pa[MAX_LOG][MAX_N];
+int val[MAX_N];
+int depth[MAX_N];
+struct node {
+    int v, edge;
+    node(const int &v, const int &w):v(v),edge(w) {}
+};
+vector<node> G[MAX_N];
+
+int in[MAX_N], out[MAX_N], id[MAX_N];
+
+void addedge(int u, int v, int edge) {
+    G[u].push_back(node(v, edge));
+    G[v].push_back(node(u, edge));
+}
+
+int bit[MAX_N << 1];
+
+int bitx(int x) {
+	return x & -x;
+}
+
+int tim;
+
+void add(int i, int x) {
+	while (i <= tim) {
+		bit[i] += x;
+		i += bitx(i);
+	}
+}
+
+int sum(int i) {
+	int sum = 0;
+	while (i > 0) {
+		sum += bit[i];
+		i -= bitx(i);
+	}
+	return sum;
+}
+
+void Clear() {
+    memset(pa, -1, sizeof pa);
+    memset(depth, 0, sizeof depth);
+    memset(bit, 0, sizeof bit);
+    tim = 0;
+}
+
+void dfs(int u, int fa, int dep) {
+    depth[u] = dep;
+    pa[0][u] = fa;
+    for (int i = 0; i < G[u].size(); ++i) {
+        if (G[u][i].v != fa) {
+        	in[G[u][i].edge] = id[G[u][i].v] = ++tim; 
+            dfs(G[u][i].v, u, dep + 1);
+            out[G[u][i].edge] = ++tim;
+        }
+    }
+}
+
+int lca(int u, int v) {
+    if (depth[u] > depth[v]) swap(u, v);
+    for (int k = 0; k < MAX_LOG; ++k) {
+        if ((depth[v] - depth[u]) >> k & 1) {
+            v = pa[k][v];
+        }
+    }
+    if (u == v) return u;
+    for (int k = MAX_LOG - 1; k >= 0; --k) {
+        if (pa[k][v] != pa[k][u]) {
+            v = pa[k][v];
+            u = pa[k][u];
+        }
+    }
+    return pa[0][u];
+}
+
+
+int main() {
+    int T, m, s;
+   
+    while (3 == scanf("%d%d%d", &n, &m, &s)) {
+	    for (int i = 0; i < MAX_N; ++i) G[i].clear();
+	    for (int i = 1; i < n; ++i) {
+	        int u, v, w;
+	        scanf("%d%d%d", &u, &v, &w);
+	        addedge(u, v, i);
+	        val[i] = w;
+	    } 
+	    Clear();
+	    dfs(1, -1, 0);
+	    for (int k = 0; k + 1 < MAX_LOG; ++k) {
+	        for (int v = 1; v <= n; ++v) {
+	            if (pa[k][v] < 0) pa[k + 1][v] = -1;
+	            else pa[k + 1][v] = pa[k][pa[k][v]];
+	        }
+	    } 
+	    for (int i = 1; i < n; ++i) {
+	    	add(in[i], val[i]);
+	    	add(out[i], -val[i]);
+	    }
+	   	for (int i = 0; i < m; ++i) {
+	   		int typ;
+	   		scanf("%d", &typ);
+	   		if (0 == typ) {
+	   			int v;
+	   			scanf("%d", &v);
+	   			int ans = sum(id[s]) + sum(id[v]) - 2 * sum(id[lca(s, v)]);
+				s = v;
+				printf("%d\n", ans); 
+	   		} else {
+	   			int u, v;
+	   			scanf("%d%d", &u, &v);
+	   			int delta = v - val[u];
+	   			add(in[u], delta);
+	   			add(out[u], -delta);
+	   			val[u] = v;
+	   		}
+	   	}
+   	}
+    return 0;
+}

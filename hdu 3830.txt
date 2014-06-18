@@ -1,0 +1,113 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+
+using namespace std;
+
+struct St {
+	long long a, b, c;
+	long long dep;
+	St():a(0), b(0), c(0), dep(0) {}
+	St(const long long &a, const long long &b, const long long &c,
+	const long long &dep): a(a), b(b), c(c), dep(dep) {} 
+};
+
+St s, t;
+
+bool check(St a, St b) {
+	return a.a == b.a && a.b == b.b && a.c == b.c;
+}
+
+long long abs1(long long a) {
+	return a >= 0 ? a : -a; 
+}
+
+void sort3(St &a) {
+	long long x[3] = {a.a, a.b, a.c};
+	sort(x, x + 3);
+	a = St(x[0], x[1], x[2], a.dep);
+} 
+
+St root(St &a) { // 返回根，计算这个序列的深度 
+	St temp = a;
+	temp.dep = 0;
+	long long dep = 0;
+	while (abs1(temp.a - temp.b) != abs1(temp.c - temp.b)) {
+		long long d1 = abs1(temp.a - temp.b);
+		long long d2 = abs1(temp.c - temp.b);
+		if (d1 > d2) {
+			long long step = (d1 - 1) / d2;
+			dep += step;
+			temp.c -= step * d2;
+			temp.b -= step * d2;	
+		} else {
+			long long step = (d2 - 1) / d1;
+			dep += step;
+			temp.b += step * d1;
+			temp.a += step * d1;
+		}
+	}
+	a.dep = dep;
+	return temp;
+}
+
+void up(St &a, long long delta) { // 向上走delta步 
+	long long cnt = 0;
+	while (cnt < delta) {
+		long long d1 = abs1(a.a - a.b);
+		long long d2 = abs1(a.c - a.b);
+		long long ned = delta - cnt;
+		if (ned <= 0) break;
+		if (d1 > d2) {
+			long long step = (d1 - 1) / d2;
+			long long u = min(ned, step);
+			a.c -= u * d2;
+			a.b -= u * d2;
+			cnt += u; 
+			if (u == ned) break; 
+		} else {
+			long long step = (d2 - 1) / d1;
+			long long u = min(ned, step);
+			a.b += u * d1;
+			a.a += u * d1;
+			cnt += u;
+			if (u == ned) break;
+		}
+	} 
+	a.dep -= delta;
+}
+
+void solve() {
+	sort3(s), sort3(t);
+	St rootS = root(s), rootT = root(t);
+	if (!check(rootS, rootT)) {
+		puts("NO");
+		return ;
+	}
+	long long q = abs1(s.dep - t.dep);
+	if (s.dep > t.dep) {
+		up(s, s.dep - t.dep); 
+	} else up(t, t.dep - s.dep);
+	long long l = 0, r = s.dep; 
+	while (l <= r) {
+		long long mid = (l + r) >> 1;
+		long long delta = s.dep - mid;
+		St x = s, y = t;
+		up(x, delta), up(y, delta);
+		if (check(x, y)) l = mid + 1;
+		else r = mid - 1; 
+	} 
+	puts("YES");
+	long long ans = 2 * (s.dep - r) + q; 
+	printf("%I64d\n", ans);
+}
+
+int main() {
+	while (3 == scanf("%I64d%I64d%I64d", &s.a, &s.b, &s.c)) {
+		s.dep = 0; 
+		scanf("%I64d%I64d%I64d", &t.a, &t.b, &t.c);
+		t.dep = 0;
+		solve();
+	}
+	return 0;
+} 

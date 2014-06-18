@@ -1,0 +1,119 @@
+#include <cstdio>
+#include <cstring>
+#include <vector>
+#include <cmath>
+#include <algorithm>
+
+using namespace std;
+
+const int MAX_LOG = 20;
+const int MAX_N = 80001;
+#pragma comment(linker, "/STACK:102400000,102400000")
+
+int n;
+int pa[MAX_LOG][MAX_N];
+int depth[MAX_N], dis[MAX_N];
+int val[MAX_N];
+struct node {
+    int v, w;
+    node(const int &_v, const int &_w):v(_v), w(_w) {}
+};
+vector<int> G[MAX_N];
+
+void addedge(int u, int v) {
+    G[u].push_back(v);
+    G[v].push_back(u);
+}
+
+void Clear() {
+    memset(pa, -1, sizeof pa);
+    memset(depth, 0, sizeof depth);
+}
+
+void dfs(int u, int fa, int dep) {
+    depth[u] = dep;
+    pa[0][u] = fa;
+    for (int i = 0; i < G[u].size(); ++i) {
+        if (G[u][i] != fa) {
+            dfs(G[u][i], u, dep + 1);
+        }
+    }
+}
+
+int lca(int u, int v) {
+    if (depth[u] > depth[v]) swap(u, v);
+    for (int k = 0; k < MAX_LOG; ++k) {
+        if ((depth[v] - depth[u]) >> k & 1) {
+            v = pa[k][v];
+        }
+    }
+    if (u == v) return u;
+    for (int k = MAX_LOG - 1; k >= 0; --k) {
+        if (pa[k][v] != pa[k][u]) {
+            v = pa[k][v];
+            u = pa[k][u];
+        }
+    }
+    return pa[0][u];
+}
+
+int p[MAX_N];
+
+void getPath(int u, int v, int &cnt) {
+	while (u != v) {
+		p[cnt++] = val[u];
+		u = pa[0][u];
+	} 
+	p[cnt++] = val[v];
+} 
+
+bool cmp(int a, int b) {
+	return a > b;
+}
+
+void sol(int kth, int u, int v) {
+	int c = lca(u, v);
+	int cnt = 0;
+	getPath(u, c, cnt);
+	getPath(v, c, cnt);
+	--cnt;
+	if (kth > cnt) {
+		puts("invalid request!");
+		return ;
+	} 
+	sort(p, p + cnt, cmp);
+	printf("%d\n", p[kth - 1]);
+}
+
+int main() {
+    int T, m;
+   
+    scanf("%d%d", &n, &m);
+    for (int i = 0; i < MAX_N; ++i) G[i].clear();
+    for (int i = 1; i <= n; ++i) {
+    	scanf("%d", val + i);
+    }
+    for (int i = 1; i < n; ++i) {
+        int u, v;
+        scanf("%d%d", &u, &v);
+        addedge(u, v);
+    } 
+    Clear();
+    dfs(1, -1, 0);
+    for (int k = 0; k + 1 < MAX_LOG; ++k) {
+        for (int v = 1; v <= n; ++v) {
+            if (pa[k][v] < 0) pa[k + 1][v] = -1;
+            else pa[k + 1][v] = pa[k][pa[k][v]];
+        }
+    } 
+    for (int i = 0; i < m; ++i) {
+        int typ, u, v;
+        scanf("%d%d%d", &typ, &u, &v);
+        if (0 == typ) {
+        	val[u] = v;
+        } else {
+        	sol(typ, u, v);
+        }
+    }
+    return 0;
+}

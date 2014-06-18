@@ -1,0 +1,103 @@
+#include <cstdio>
+#include <cstring>
+#include <vector>
+#include <cmath>
+
+using namespace std;
+
+const int MAX_LOG = 20;
+const int MAX_N = 40011;
+#pragma comment(linker, "/STACK:102400000,102400000")
+
+int n;
+int fat[MAX_N];
+bool vis[MAX_N];
+int depth[MAX_N], dis[MAX_N];
+struct node {
+	int v, w;
+};
+vector<node> G[MAX_N];
+
+int head[MAX_N];
+struct ask {
+	int u, v, lca, next;
+} A[MAX_N << 1];
+int askcnt;
+
+void addedge(int u, int v, int w) {
+	node t;
+	t.v = v, t.w = w;
+	G[u].push_back(t);
+	t.v = u;
+	G[v].push_back(t);
+}
+
+void addask(int u, int v) {
+	A[askcnt].u = u;
+	A[askcnt].v = v;
+	A[askcnt].lca = -1;
+	A[askcnt].next = head[u];
+	head[u] = askcnt++;
+}
+
+int Find(int x) {
+	return x == fat[x] ? x : fat[x] = Find(fat[x]);
+}
+
+void Clear() {
+	memset(A, 0, sizeof A);
+	memset(head, -1, sizeof head);
+	memset(depth, 0, sizeof depth);
+	memset(vis, false, sizeof vis);
+	for (int i = 0; i <= n; ++i) {
+		fat[i] = i;
+	}
+	askcnt = 0;
+}
+
+void tarjan(int u, int fa) {
+	vis[u] = true;
+	for (int i = 0; i < G[u].size(); ++i) {
+		if (!vis[G[u][i].v]) {
+			dis[G[u][i].v] = dis[u] + G[u][i].w;
+			tarjan(G[u][i].v, u);
+			int v = G[u][i].v;
+			fat[v] = u;
+		}
+	}
+	for (int i = head[u]; ~i; i = A[i].next) {
+		if (vis[A[i].v]) {
+			int v = A[i].v;
+			A[i].lca = A[i ^ 1].lca = Find(v);
+		}
+	}
+}
+
+int main() {
+	int T, m;
+	scanf("%d%d", &n, &m);
+	for (int i = 0; i < MAX_N; ++i) G[i].clear();
+	for (int i = 1; i <= m; ++i) {
+		int u, v, w;
+		char s[3];
+		scanf("%d%d%d%s", &u, &v, &w, s);
+		addedge(u, v, w);
+	} 
+	Clear(); 
+	scanf("%d", &n);
+	for (int i = 0; i < n; ++i) {
+		int u, v;
+		scanf("%d %d", &u, &v);
+		addask(u, v); 
+		addask(v, u);
+	}
+	dis[1] = 0;
+	tarjan(1, -1);
+	for (int i = 0; i < n; ++i) {
+		int k = 2 * i; 
+		int u = A[k].u, v = A[k].v, lca = A[k].lca;
+		int ans = dis[u] + dis[v] - 2 * dis[lca];
+		printf("%d\n", ans); 
+	}
+	return 0;
+}

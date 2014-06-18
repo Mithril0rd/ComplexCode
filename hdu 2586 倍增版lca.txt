@@ -1,0 +1,95 @@
+#include <cstdio>
+#include <cstring>
+#include <vector>
+#include <cmath>
+
+using namespace std;
+
+const int MAX_LOG = 20;
+const int MAX_N = 40011;
+#pragma comment(linker, "/STACK:102400000,102400000")
+
+int n;
+int pa[MAX_LOG][MAX_N];
+int depth[MAX_N], dis[MAX_N];
+struct node {
+    int v, w;
+};
+vector<node> G[MAX_N];
+
+void addedge(int u, int v, int w) {
+    node t;
+    t.v = v, t.w = w;
+    G[u].push_back(t);
+    t.v = u;
+    G[v].push_back(t);
+}
+
+void Clear() {
+    memset(pa, -1, sizeof pa);
+    memset(depth, 0, sizeof depth);
+}
+
+void dfs(int u, int fa, int dep) {
+    depth[u] = dep;
+    pa[0][u] = fa;
+    for (int i = 0; i < G[u].size(); ++i) {
+        if (G[u][i].v != fa) {
+            dis[G[u][i].v] = dis[u] + G[u][i].w;
+            dfs(G[u][i].v, u, dep + 1);
+        }
+    }
+}
+
+int lca(int u, int v) {
+    if (depth[u] > depth[v]) swap(u, v);
+    for (int k = 0; k < MAX_LOG; ++k) {
+        if ((depth[v] - depth[u]) >> k & 1) {
+            v = pa[k][v];
+        }
+    }
+    if (u == v) return u;
+    for (int k = MAX_LOG - 1; k >= 0; --k) {
+        if (pa[k][v] != pa[k][u]) {
+            v = pa[k][v];
+            u = pa[k][u];
+        }
+    }
+    return pa[0][u];
+}
+
+
+int main() {
+    int T, m;
+    scanf("%d", &T);
+    while (T-- > 0) {
+        scanf("%d%d", &n, &m);
+        for (int i = 0; i < MAX_N; ++i) G[i].clear();
+        for (int i = 1; i < n; ++i) {
+            int u, v, w;
+            scanf("%d%d%d", &u, &v, &w);
+            addedge(u, v, w);
+        } 
+        int k = 0;
+        Clear();
+        dis[1] = 0;
+        dfs(1, -1, 0);
+        for (int k = 0; k + 1 < MAX_LOG; ++k) {
+            for (int v = 1; v <= n; ++v) {
+                if (pa[k][v] < 0) pa[k + 1][v] = -1;
+                else pa[k + 1][v] = pa[k][pa[k][v]];
+            }
+        } 
+        for (int i = 0; i < m; ++i) {
+            int u, v;
+            scanf("%d %d", &u, &v);
+            if (u == v) {
+                puts("0");
+                continue;
+            } 
+            int ans = dis[u] + dis[v] - 2 * dis[lca(u, v)];
+            printf("%d\n", ans); 
+        }
+    }
+    return 0;
+}
