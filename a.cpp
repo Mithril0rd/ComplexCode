@@ -1,161 +1,82 @@
-<<<<<<< HEAD
-#include <algorithm>
-#include <iostream>
-#include <iomanip>
-#include <complex>
-#include <cstring>
-#include <cstdlib>
-#include <string>
-#include <vector>
-#include <cstdio>
-#include <cmath>
-#include <map>
-#include <set>
-using namespace std;
-//#pragma comment(linker,"/STACK:102400000,102400000")
-
-int n, wantCycle;
-int x[3001];
-int c[3001];
-int size[3001];
-
-int nCycle()
-{
-	int ret = 0;
-	memset(c, 0, sizeof(c));
-	for(int i = 1; i <= n; i++)
-		if(c[i] == 0)
-		{
-			ret ++;
-			size[ret] = 0;
-			int v = i;
-			while(c[v] == 0)
-			{
-				c[v] = ret;
-				v = x[v];
-				size[ret] ++;
-			}
-		}
-	return ret;
-}
-
-vector <int> A, B;
-
-void increase()
-{
-	for(int i = 1; i <= n; i++)
-		if(size[c[i]] != 1)
-		{
-			for(int j = 1; j <= n; j++)
-				if(j != i && c[i] == c[j])
-				{
-					A.push_back(i);
-					B.push_back(j);
-					swap(x[i], x[j]);
-					return;
-				}
-		}
-}
-
-void decrease()
-{
-	for(int j = 2; j <= n; j++)
-		if(c[1] != c[j])
-		{
-			A.push_back(1);
-			B.push_back(j);
-			swap(x[1], x[j]);
-			return;
-		}
-}
-
-
-
-int MAIN()
-{
-	cin >> n;
-	for(int i = 1; i <= n; i++)
-		cin >> x[i];
-	cin >> wantCycle;
-	wantCycle = n - wantCycle;
-	printf("%d\n", nCycle());
-	while(true)
-	{
-		int cyc = nCycle();
-		if(cyc == wantCycle)
-			break;
-		if(cyc < wantCycle)
-			increase();
-		else
-			decrease();
-	}
-	cout << A.size() << endl;
-	for(int i = 0; i < A.size(); i++)
-	{
-		cout << A[i] << " " << B[i] << (i == A.size()-1 ? "\n" : " ");
-	}
-	
-	return 0;
-}
-
-int main()
-{		
-	ios :: sync_with_stdio(false);
-	cout << fixed << setprecision(16);
-	return MAIN();
-}
-=======
-#include <cstdio>
-#include <cstring>
-
-const int MAX_N = 22;
-const int MAX_S = 8007;
-
-int n, m;
-int mat[MAX_N][MAX_N];
-int dp[MAX_N][MAX_S<<1];
-int a[MAX_N], b[MAX_N];
-
-int main() {
-	scanf("%d%d", &n, &m);
-	for (int i = 1; i <= n; ++i) {
-		scanf("%d", a + i);
-	}
-	for (int i = 1; i <= m; ++i) {
-		scanf("%d", b + i);
-	}
-	for (int i = 1; i <= m; ++i) {
-		for (int j = 1; j <= n; ++j) {
-			mat[i][j] = b[i] * a[j];
-			if (i == 1) {
-				if (mat[i][j] >= 0 && mat[i][j] < MAX_S) {
-					dp[1][mat[i][j]] = 1;
-				} else if (mat[i][j] < 0) {
-					dp[1][MAX_S - mat[i][j]] = 1;
-				}
-			}
-		}
-	}
-	for (int i = 2; i <= m; ++i) {
-		for (int j = 1; j <= n; ++j) {
-			for (int k = 0; k < MAX_S; ++k) {
-				if (mat[i][j] + k >= 0 && mat[i][j] + k < MAX_S) {
-					dp[i][mat[i][j] + k] += dp[i - 1][k];
-				} else if (mat[i][j] + k < 0) {
-					dp[i][MAX_S - (mat[i][j] + k)] += dp[i - 1][k];
-				}
-			}
-			for (int k = MAX_S; k < MAX_S * 2; ++k) {
-				int t = MAX_S - k;
-				if (mat[i][j] + t >= 0) 
-					dp[i][mat[i][j] + t] += dp[i - 1][k];
-				else if (mat[i][j] + t < 0)
-					dp[i][MAX_S - (mat[i][j] + t)] += dp[i - 1][k];
-			}
-		}
-	}
-	int ans = dp[m][0];
-	printf("%d\n", ans);
-	return 0;
-}
->>>>>>> dp/master
+#include <cstdio> 
+#include <algorithm> 
+#include <cstring> 
+const int Inf = (int)(1e9); 
+const int N = 200 + 2; 
+const int M = 100 + 2; 
+struct node { 
+    int val, pos; 
+}; 
+node chose[N][N]; 
+struct tnode { 
+    int i, pos; 
+}; 
+tnode pre[N][N]; 
+int Cos[N][N], d[N][M]; 
+int n, K; 
+int ans[M], deep; 
+void dfs(int i, int j) { 
+    if (j == 0) return ; 
+    dfs(pre[i][j].i, j - 1); 
+    ans[deep ++] = pre[i][j].pos; 
+} 
+int getnum(){ 
+    char ch; 
+    while(((ch = getchar()) < '0' || ch > '9') && ch != '-'); 
+    int num = ch - '0'; 
+    while((ch = getchar()) >= '0' && ch <= '9') num = num * 10 + ch - '0'; 
+    return num; 
+} 
+int main() { 
+    int i, j, k, a; 
+    while (2 == scanf("%d%d", &n, &K)) { 
+        memset(Cos, 0, sizeof Cos); 
+        for (i = 1; i <= n; ++i) { 
+            a = getnum(); 
+            for (j = 1; j <= n; ++j) 
+                Cos[i][j] += Cos[i - 1][j] + abs(i - j) * a; 
+        } 
+        for (i = 1; i <= n; ++i) 
+            for (j = i; j <= n; ++j) { 
+                chose[i][j].val = Inf; 
+                for (k = 1; k <= n; ++k) { 
+                    a = Cos[j][k] - Cos[i - 1][k]; 
+                    if (a < chose[i][j].val) { 
+                        chose[i][j].val = a; 
+                        chose[i][j].pos = k; 
+                    } 
+                } 
+            } 
+        for (i = 0; i <= n + 1; ++i) 
+            for (j = 0; j <= K; ++j) { 
+                d[i][j] = pre[i][j].pos = Inf; 
+                pre[i][j].i = -1;  
+            } 
+        d[n + 1][0] = 0; 
+        for (i = n + 1; i >= 2; --i)  
+            for (j = 0; j < K; ++j) if (d[i][j] < Inf) 
+                for (k = i - 1; k >= 1; --k) {  
+                    if (d[k][j + 1] > d[i][j] + chose[k][i - 1].val) { 
+                        d[k][j + 1] = d[i][j] + chose[k][i - 1].val; 
+                        pre[k][j + 1].i = i;  
+                        pre[k][j + 1].pos = chose[k][i - 1].pos; 
+                    } else if (d[k][j + 1] == d[i][j] + chose[k][i - 1].val  
+                        && pre[k][j + 1].pos > chose[k][i - 1].pos) 
+                        pre[k][j + 1].pos = chose[k][i - 1].pos; 
+                    else if (d[k][j + 1] == d[i][j] + chose[k][i - 1].val  
+                        && pre[k][j + 1].pos == chose[k][i - 1].pos) 
+                        pre[k][j + 1].i = i; 
+                } 
+        printf("%d\n", d[1][K]); 
+        deep = 0; 
+        dfs(1, K); 
+        std::sort(ans, ans + deep); 
+        for (i = 0; i < deep; ++i) { 
+            if (i) putchar(' '); 
+            if (i && ans[i] <= ans[i - 1]) ans[i] = ans[i - 1] + 1; 
+            printf("%d", ans[i]); 
+        } 
+        puts(""); 
+    } 
+    return 0; 
+} 
