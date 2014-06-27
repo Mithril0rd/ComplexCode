@@ -1,64 +1,82 @@
-#include <cstdio>
-#include <cstring>
-#include <stack>
-#include <algorithm>
-
-using namespace std; 
-
-const int MAX_N = 507;
-
-int n, m;
-int a[MAX_N], b[MAX_N];
-int dp[MAX_N][MAX_N], path[MAX_N][MAX_N]; 
-stack<int> s;
-
-void print(int i, int j) {
-	if (i == 0 || j == 0) 
-		return ;
-	if (~path[i][j]) {
-		print(i - 1, path[i][j]);
-		printf("%d ", b[j]);
-	}
-}
-
-int main() {
-	scanf("%d", &n);
-	for (int i = 1; i <= n; ++i) {
-		scanf("%d", &a[i]);
-	}
-	scanf("%d", &m);
-	for (int i = 1; i <= m; ++i) {
-		scanf("%d", &b[i]);
-	}
-	memset(path, -1, sizeof path);
-	int ans = 0, x = 0, y = 0;
-	for (int i = 1; i <= n; ++i) {
-		int idx = 0, Max = 0;
-		for (int j = 1; j <= m; ++j) {
-			dp[i][j] = dp[i - 1][j];
-			if (a[i] > b[j]) {
-				if (dp[i - 1][j] > Max) {
-					Max = dp[i - 1][j];
-					idx = j;
-				}
-			} else if (a[i] == b[j]) {
-				dp[i][j] = Max + 1;
-				path[i][j] = idx;
-			} 
-			if (dp[i][j] > ans) {
-				ans = dp[i][j];
-				x = i, y = j;
-			}
-		}
-	}
-	printf("%d\n", ans);
-	int ans1 = ans; 
-	while (ans1 > 0) {
-		if (~path[x][y]) s.push(b[y]), --ans1, y = path[x][y];
-		--x;
-	}
-	while (!s.empty())
-		printf("%d ", s.top()), s.pop();
-	puts("");
-	return 0;
-}
+#include <cstdio> 
+#include <algorithm> 
+#include <cstring> 
+const int Inf = (int)(1e9); 
+const int N = 200 + 2; 
+const int M = 100 + 2; 
+struct node { 
+    int val, pos; 
+}; 
+node chose[N][N]; 
+struct tnode { 
+    int i, pos; 
+}; 
+tnode pre[N][N]; 
+int Cos[N][N], d[N][M]; 
+int n, K; 
+int ans[M], deep; 
+void dfs(int i, int j) { 
+    if (j == 0) return ; 
+    dfs(pre[i][j].i, j - 1); 
+    ans[deep ++] = pre[i][j].pos; 
+} 
+int getnum(){ 
+    char ch; 
+    while(((ch = getchar()) < '0' || ch > '9') && ch != '-'); 
+    int num = ch - '0'; 
+    while((ch = getchar()) >= '0' && ch <= '9') num = num * 10 + ch - '0'; 
+    return num; 
+} 
+int main() { 
+    int i, j, k, a; 
+    while (2 == scanf("%d%d", &n, &K)) { 
+        memset(Cos, 0, sizeof Cos); 
+        for (i = 1; i <= n; ++i) { 
+            a = getnum(); 
+            for (j = 1; j <= n; ++j) 
+                Cos[i][j] += Cos[i - 1][j] + abs(i - j) * a; 
+        } 
+        for (i = 1; i <= n; ++i) 
+            for (j = i; j <= n; ++j) { 
+                chose[i][j].val = Inf; 
+                for (k = 1; k <= n; ++k) { 
+                    a = Cos[j][k] - Cos[i - 1][k]; 
+                    if (a < chose[i][j].val) { 
+                        chose[i][j].val = a; 
+                        chose[i][j].pos = k; 
+                    } 
+                } 
+            } 
+        for (i = 0; i <= n + 1; ++i) 
+            for (j = 0; j <= K; ++j) { 
+                d[i][j] = pre[i][j].pos = Inf; 
+                pre[i][j].i = -1;  
+            } 
+        d[n + 1][0] = 0; 
+        for (i = n + 1; i >= 2; --i)  
+            for (j = 0; j < K; ++j) if (d[i][j] < Inf) 
+                for (k = i - 1; k >= 1; --k) {  
+                    if (d[k][j + 1] > d[i][j] + chose[k][i - 1].val) { 
+                        d[k][j + 1] = d[i][j] + chose[k][i - 1].val; 
+                        pre[k][j + 1].i = i;  
+                        pre[k][j + 1].pos = chose[k][i - 1].pos; 
+                    } else if (d[k][j + 1] == d[i][j] + chose[k][i - 1].val  
+                        && pre[k][j + 1].pos > chose[k][i - 1].pos) 
+                        pre[k][j + 1].pos = chose[k][i - 1].pos; 
+                    else if (d[k][j + 1] == d[i][j] + chose[k][i - 1].val  
+                        && pre[k][j + 1].pos == chose[k][i - 1].pos) 
+                        pre[k][j + 1].i = i; 
+                } 
+        printf("%d\n", d[1][K]); 
+        deep = 0; 
+        dfs(1, K); 
+        std::sort(ans, ans + deep); 
+        for (i = 0; i < deep; ++i) { 
+            if (i) putchar(' '); 
+            if (i && ans[i] <= ans[i - 1]) ans[i] = ans[i - 1] + 1; 
+            printf("%d", ans[i]); 
+        } 
+        puts(""); 
+    } 
+    return 0; 
+} 
