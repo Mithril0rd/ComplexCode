@@ -1,55 +1,41 @@
 #include <cstdio>
-#include <cstring>
+#include <algorithm>
 
-const int MAX_N = 22;
-const int MAX_S = 8007;
+using namespace std;
+
+const int MAX_N = 307;
 
 int n, m;
-int mat[MAX_N][MAX_N];
-int dp[MAX_N][MAX_S<<1];
-int a[MAX_N], b[MAX_N];
+int gcd[MAX_N][MAX_N];
 
 int main() {
-	scanf("%d%d", &n, &m);
-	for (int i = 1; i <= n; ++i) {
-		scanf("%d", a + i);
-	}
-	for (int i = 1; i <= m; ++i) {
-		scanf("%d", b + i);
-	}
-	for (int i = 1; i <= m; ++i) {
-		for (int j = 1; j <= n; ++j) {
-			mat[i][j] = b[i] * a[j];
-			if (i == 1) {
-				if (mat[i][j] >= 0 && mat[i][j] < MAX_S) {
-					dp[1][mat[i][j]] = 1;
-				} else if (mat[i][j] < 0) {
-					dp[1][MAX_S - mat[i][j]] = 1;
-				}
-			}
-		}
-	}
-	for (int i = 2; i <= m; ++i) {
-		for (int j = 1; j <= n; ++j) {
-			for (int k = 0; k < MAX_S; ++k) {
-				if (mat[i][j] + k >= 0 && mat[i][j] + k < MAX_S) {
-					dp[i][mat[i][j] + k] += dp[i - 1][k];
-				} else if (mat[i][j] + k < 0) {
-					dp[i][MAX_S - (mat[i][j] + k)] += dp[i - 1][k];
-				}
-			}
-			for (int k = MAX_S; k < MAX_S * 2; ++k) {
-				int t = MAX_S - k;
-				if (mat[i][j] + t >= 0) 
-					dp[i][mat[i][j] + t] += dp[i - 1][k];
-				else if (mat[i][j] + t < 0)
-					dp[i][MAX_S - (mat[i][j] + t)] += dp[i - 1][k];
-			}
-		}
-	}
-	int ans = dp[m][0];
-	printf("%d\n", ans);
-	return 0;
+    for(int i = 1; i < MAX_N; ++i)
+        for(int j = i; j < MAX_N; ++j)
+            gcd[i][j] = __gcd(i, j);
+
+	 while(2 == scanf("%d%d",&n,&m)) {
+		 if (0 == n && 0 == m) 
+		   break;
+		 --n, --m;
+         if (n > m) swap(n, m);
+		 long long ans = 0;
+         for(int x = 1; x <= n; ++x) {
+             for(int y = x; y <= m; ++y)   if(gcd[x][y] <= 2) {
+                 if(x == y) {
+                     int tmp = (n - x + 1) * (m - y + 1);
+                     if(gcd[x][y] == 1)  ans += tmp;
+                     else ans -= tmp;
+                 }
+                 else {
+                     int tmp = (n - x + 1) * (m - y + 1);
+                     if(x <= m && y <= n)   tmp += (m- x + 1) * (n - y + 1);
+                     if(gcd[x][y] == 1) ans += tmp;
+                     else ans -= tmp;
+					     
+				 }
+             }
+         }
+         ans *= 2;
+         printf("%lld\n",ans);
+     }
 }
-
-
